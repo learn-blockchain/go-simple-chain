@@ -8,6 +8,8 @@ import (
 	"github.com/learn-blockchain/go-simple-coin/transaction"
 )
 
+const difficulty uint64 = 1
+
 // Chain is the linked list of blocks
 type Chain struct {
 	head *block.Block
@@ -33,7 +35,7 @@ func (c *Chain) createGenesisBlock() (*block.Block, error) {
 		Transactions: nil,
 		PrevBlock:    nil,
 		PrevHash:     nil,
-	})
+	}, difficulty)
 }
 
 // GetLatestBlock returns the most recent block on the chain
@@ -50,7 +52,7 @@ func (c *Chain) AddBlock(t []transaction.Payment) error {
 		Transactions: t,
 		PrevBlock:    prevBlock,
 		PrevHash:     prevBlock.GetProps().Hash,
-	})
+	}, difficulty)
 	if err != nil {
 		return err
 	}

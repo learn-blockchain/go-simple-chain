@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"strconv"
 	"time"
 
 	merkle "github.com/learn-blockchain/go-merkle-tree"
@@ -17,6 +18,7 @@ type Props struct {
 	Timestamp    time.Time // note: this is set at the time the block is created
 	Transactions []transaction.Payment
 	PrevBlock    *Block
+	Nonce        uint64
 	Hash         []byte // note: this will not be set if passed to the New function, but will be calc'd, instead
 	PrevHash     []byte
 }
@@ -27,7 +29,7 @@ type Block struct {
 }
 
 // New returns a block
-func New(props Props) (*Block, error) {
+func New(props Props, difficulty uint64) (*Block, error) {
 	b := &Block{
 		p: Props{
 			Index:        props.Index,
@@ -38,7 +40,7 @@ func New(props Props) (*Block, error) {
 		},
 	}
 
-	err := b.setHash()
+	err := b.mine(difficulty)
 	return b, err
 }
 
@@ -75,15 +77,12 @@ func (b *Block) CalcHash() ([]byte, error) {
 	tmpBytes = append(tmpBytes, node.Hash...)
 
 	// 4. Add the hash of the previous block
-	tmpBytes = append(tmpBytes, b.p.PrevHash...)
-
-	// 4. Add the hash of the previous block
 	if b.p.PrevHash != nil {
-		err = binary.Write(buf, binary.LittleEndian, b.p.PrevHash)
-		if err != nil {
-			return nil, err
-		}
+		tmpBytes = append(tmpBytes, b.p.PrevHash...)
 	}
+
+	// 5. Add nonce
+	tmpBytes = append(tmpBytes, []byte(strconv.Itoa(int(b.p.Nonce)))...)
 
 	hasher := sha256.New()
 	hasher.Write(tmpBytes)
@@ -97,5 +96,27 @@ func (b *Block) setHash() error {
 	}
 
 	b.p.Hash = h
+	return nil
+}
+
+func (b *Block) mine(difficulty uint64) error {
+	var s string
+	for i := 0; i < int(difficulty); i++ {
+		s += "0"
+	}
+
+	err := b.setHash()
+	if err != nil {
+		return err
+	}
+
+	for string(b.p.Hash)[:int(difficulty)] != s {
+		b.p.Nonce++
+		err = b.setHash()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
