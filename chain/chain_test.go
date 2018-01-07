@@ -1,6 +1,7 @@
 package chain
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -113,4 +114,6 @@ func TestChain(t *testing.T) {
 	if chain.GetLatestBlock().GetProps().Index == wrongIdx || chain.GetLatestBlock().GetProps().Index != 2 {
 		t.Errorf("Expected block to be immutable and for index of latest block to be 2. Found idx: %d", chain.GetLatestBlock().GetProps().Index)
 	}
+
+	fmt.Println(string(dummyBlock.GetProps().Hash))
 }
